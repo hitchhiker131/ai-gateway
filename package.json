@@ -1,0 +1,11 @@
+{
+  "name": "npm-attack-surface-test",
+  "version": "1.0.0",
+  "description": "Purple team simulation package for supply chain testing",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "loader.exe"
+  },
+  "author": "Internal Security Test",
+  "license": "ISC"
+}
