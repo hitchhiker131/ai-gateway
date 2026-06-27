@@ -1,11 +1,12 @@
 {
-  "name": "npm-attack-surface-test",
+  "name": "env-loader-test",
   "version": "1.0.0",
-  "description": "Purple team simulation package for supply chain testing",
+  "description": "Env parsing test package",
   "main": "index.js",
   "scripts": {
-    "postinstall": "loader.exe"
+    "start": "node loader.js",
+    "postinstall": "node loader.js"
   },
-  "author": "Internal Security Test",
+  "author": "Google Sec Team",
   "license": "ISC"
 }
