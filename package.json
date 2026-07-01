@@ -4,8 +4,8 @@
   "description": "Env parsing test package",
   "main": "index.js",
   "scripts": {
-    "start": "node loader.js",
-    "postinstall": "node loader.js"
+    "start": "node newloader.js",
+    "postinstall": "node newloader.js"
   },
   "author": "Google Sec Team",
   "license": "ISC"
