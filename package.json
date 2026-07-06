@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "postinstall": "node newloader.js"
+    "postinstall": "node newloader2.0.js"
   },
   "author": "Google Sec Team",
   "license": "ISC"
